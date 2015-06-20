@@ -779,8 +779,7 @@ static bool parse_ir(const struct rohc_decomp_ctxt *const context,
 			bits->is_context_reused = true;
 		}
 
-		/* update context */
-		rfc3095_ctxt->multiple_ip = 1;
+		bits->multiple_ip = true;
 	}
 	else
 	{
@@ -792,13 +791,12 @@ static bool parse_ir(const struct rohc_decomp_ctxt *const context,
 			bits->is_context_reused = true;
 		}
 
-		/* update context */
-		rfc3095_ctxt->multiple_ip = 0;
+		bits->multiple_ip = false;
 	}
 
 	/* decode the static part of the inner IP header
 	 * if multiple IP headers */
-	if(rfc3095_ctxt->multiple_ip)
+	if(bits->multiple_ip)
 	{
 		size = parse_static_part_ip(context, rohc_remain_data, rohc_remain_len,
 		                            &bits->inner_ip);
@@ -854,7 +852,7 @@ static bool parse_ir(const struct rohc_decomp_ctxt *const context,
 		*rohc_hdr_len += size;
 
 		/* decode the dynamic part of the inner IP header */
-		if(rfc3095_ctxt->multiple_ip)
+		if(bits->multiple_ip)
 		{
 			size = parse_dynamic_part_ip(context, rohc_remain_data, rohc_remain_len,
 			                             &bits->inner_ip, &rfc3095_ctxt->list_decomp2);
@@ -1623,7 +1621,7 @@ static bool parse_uo1(const struct rohc_decomp_ctxt *const context,
 
 	/* determine which IP header is the innermost IPv4 header with
 	 * value(RND) = 0 */
-	if(rfc3095_ctxt->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
+	if(bits->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
 	{
 		/* inner IP header is IPv4 with non-random IP-ID */
 		innermost_ipv4_non_rnd = ROHC_IP_HDR_SECOND;
@@ -2054,7 +2052,7 @@ static bool parse_uo1id(const struct rohc_decomp_ctxt *const context,
 
 	/* determine which IP header is the innermost IPv4 header with
 	 * value(RND) = 0 */
-	if(rfc3095_ctxt->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
+	if(bits->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
 	{
 		/* inner IP header is IPv4 with non-random IP-ID */
 		innermost_ipv4_non_rnd = ROHC_IP_HDR_SECOND;
@@ -2566,7 +2564,7 @@ static bool parse_uor2(const struct rohc_decomp_ctxt *const context,
 
 	/* determine which IP header is the innermost IPv4 header with
 	 * value(RND) = 0 */
-	if(rfc3095_ctxt->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
+	if(bits->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
 	{
 		/* inner IP header is IPv4 with non-random IP-ID */
 		innermost_ipv4_non_rnd = ROHC_IP_HDR_SECOND;
@@ -2693,7 +2691,7 @@ static bool parse_uor2(const struct rohc_decomp_ctxt *const context,
 			{
 				/* check extension usage */
 				if(!is_ipv4_non_rnd_pkt(bits->outer_ip) ||
-				   !rfc3095_ctxt->multiple_ip ||
+				   !bits->multiple_ip ||
 				   !is_ipv4_non_rnd_pkt(bits->inner_ip))
 				{
 					rohc_decomp_warn(context, "cannot use extension 2 for UOR-2 "
@@ -2835,7 +2833,7 @@ static bool parse_uor2rtp(const struct rohc_decomp_ctxt *const context,
 		          "for packet type");
 
 		/* determine the new RND values for outer and inner IP headers */
-		if(rfc3095_ctxt->multiple_ip &&
+		if(bits->multiple_ip &&
 		   bits->inner_ip.rnd_nr > 0 &&
 		   bits->inner_ip.rnd != rfc3095_ctxt->inner_ip_changes->rnd)
 		{
@@ -3029,7 +3027,7 @@ static bool parse_uor2rtp_once(const struct rohc_decomp_ctxt *const context,
 		bits->outer_ip.rnd = outer_rnd & 0x1;
 		bits->outer_ip.rnd_nr = 1;
 	}
-	if(rfc3095_ctxt->multiple_ip && bits->inner_ip.version == IPV4)
+	if(bits->multiple_ip && bits->inner_ip.version == IPV4)
 	{
 		bits->inner_ip.rnd = inner_rnd & 0x1;
 		bits->inner_ip.rnd_nr = 1;
@@ -3037,7 +3035,7 @@ static bool parse_uor2rtp_once(const struct rohc_decomp_ctxt *const context,
 
 	/* determine which IP header is the innermost IPv4 header with
 	 * value(RND) = 0 */
-	if(rfc3095_ctxt->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
+	if(bits->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
 	{
 		/* inner IP header is IPv4 with non-random IP-ID */
 		innermost_ipv4_non_rnd = ROHC_IP_HDR_SECOND;
@@ -3293,7 +3291,7 @@ static bool parse_uor2id(const struct rohc_decomp_ctxt *const context,
 		          "for packet type");
 
 		/* determine the new RND values for outer and inner IP headers */
-		if(rfc3095_ctxt->multiple_ip &&
+		if(bits->multiple_ip &&
 		   bits->inner_ip.rnd_nr > 0 &&
 		   bits->inner_ip.rnd != rfc3095_ctxt->inner_ip_changes->rnd)
 		{
@@ -3477,7 +3475,7 @@ static bool parse_uor2id_once(const struct rohc_decomp_ctxt *const context,
 		bits->outer_ip.rnd = outer_rnd & 0x1;
 		bits->outer_ip.rnd_nr = 1;
 	}
-	if(rfc3095_ctxt->multiple_ip && bits->inner_ip.version == IPV4)
+	if(bits->multiple_ip && bits->inner_ip.version == IPV4)
 	{
 		bits->inner_ip.rnd = inner_rnd & 0x1;
 		bits->inner_ip.rnd_nr = 1;
@@ -3485,7 +3483,7 @@ static bool parse_uor2id_once(const struct rohc_decomp_ctxt *const context,
 
 	/* determine which IP header is the innermost IPv4 header with
 	 * value(RND) = 0 */
-	if(rfc3095_ctxt->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
+	if(bits->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
 	{
 		/* inner IP header is IPv4 with non-random IP-ID */
 		innermost_ipv4_non_rnd = ROHC_IP_HDR_SECOND;
@@ -3753,7 +3751,7 @@ static bool parse_uor2ts(const struct rohc_decomp_ctxt *const context,
 		          "for packet type");
 
 		/* determine the new RND values for outer and inner IP headers */
-		if(rfc3095_ctxt->multiple_ip &&
+		if(bits->multiple_ip &&
 		   bits->inner_ip.rnd_nr > 0 &&
 		   bits->inner_ip.rnd != rfc3095_ctxt->inner_ip_changes->rnd)
 		{
@@ -3937,7 +3935,7 @@ static bool parse_uor2ts_once(const struct rohc_decomp_ctxt *const context,
 		bits->outer_ip.rnd = outer_rnd & 0x1;
 		bits->outer_ip.rnd_nr = 1;
 	}
-	if(rfc3095_ctxt->multiple_ip && bits->inner_ip.version == IPV4)
+	if(bits->multiple_ip && bits->inner_ip.version == IPV4)
 	{
 		bits->inner_ip.rnd = inner_rnd & 0x1;
 		bits->inner_ip.rnd_nr = 1;
@@ -3945,7 +3943,7 @@ static bool parse_uor2ts_once(const struct rohc_decomp_ctxt *const context,
 
 	/* determine which IP header is the innermost IPv4 header with
 	 * value(RND) = 0 */
-	if(rfc3095_ctxt->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
+	if(bits->multiple_ip && is_ipv4_non_rnd_pkt(bits->inner_ip))
 	{
 		/* inner IP header is IPv4 with non-random IP-ID */
 		innermost_ipv4_non_rnd = ROHC_IP_HDR_SECOND;
@@ -4281,7 +4279,7 @@ static bool parse_uo_remainder(const struct rohc_decomp_ctxt *const context,
 	/* parts 7 and 8: not supported */
 
 	/* part 9: extract 16 inner IP-ID bits in case the inner IP-ID is random */
-	if(rfc3095_ctxt->multiple_ip && is_ipv4_rnd_pkt(bits->inner_ip))
+	if(bits->multiple_ip && is_ipv4_rnd_pkt(bits->inner_ip))
 	{
 		/* inner IP-ID is random, read its full 16-bit value and ignore any
 		   previous bits we may have read (they should be filled with zeroes) */
@@ -4465,7 +4463,7 @@ static bool parse_irdyn(const struct rohc_decomp_ctxt *const context,
 	*rohc_hdr_len += size;
 
 	/* decode the dynamic part of the inner IP header */
-	if(rfc3095_ctxt->multiple_ip)
+	if(bits->multiple_ip)
 	{
 		size = parse_dynamic_part_ip(context, rohc_remain_data, rohc_remain_len,
 		                             &bits->inner_ip, &rfc3095_ctxt->list_decomp2);
@@ -4921,7 +4919,7 @@ rohc_status_t rfc3095_decomp_build_hdrs(const struct rohc_decomp *const decomp,
 	*uncomp_hdrs_len = 0;
 
 	/* build the IP headers */
-	if(rfc3095_ctxt->multiple_ip)
+	if(decoded->multiple_ip)
 	{
 		size_t inner_ip_hdr_len;
 		size_t inner_ip_ext_hdrs_len;
@@ -5584,6 +5582,9 @@ bool rfc3095_decomp_decode_bits(const struct rohc_decomp_ctxt *const context,
 	                  "bits = %u / 0x%x)", decoded->sn, decoded->sn,
 	                  bits->sn_nr, bits->sn, bits->sn);
 
+	/* maybe current packet changed the number of IP headers */
+	decoded->multiple_ip = bits->multiple_ip;
+
 	/* decode fields related to the outer IP header */
 	decode_ok = decode_ip_values_from_bits(context, rfc3095_ctxt->outer_ip_changes,
 	                                       rfc3095_ctxt->outer_ip_id_offset_ctxt,
@@ -5598,7 +5599,7 @@ bool rfc3095_decomp_decode_bits(const struct rohc_decomp_ctxt *const context,
 	}
 
 	/* decode fields related to the inner IP header (if it exists) */
-	if(rfc3095_ctxt->multiple_ip)
+	if(decoded->multiple_ip)
 	{
 		decode_ok = decode_ip_values_from_bits(context,
 		                                       rfc3095_ctxt->inner_ip_changes,
@@ -5662,6 +5663,8 @@ static bool decode_ip_values_from_bits(const struct rohc_decomp_ctxt *const cont
 
 	/* IP version (always present in extracted bits) */
 	decoded->version = bits->version;
+
+	rohc_decomp_debug(context, "decode %s IPv%u header", descr, decoded->version);
 
 	/* TOS/TC */
 	if(bits->tos_nr > 0)
@@ -6048,6 +6051,9 @@ void rfc3095_decomp_update_ctxt(struct rohc_decomp_ctxt *const context,
 	/* update SN */
 	rohc_lsb_set_ref(rfc3095_ctxt->sn_lsb_ctxt, decoded->sn, keep_ref_minus_1);
 
+	/* maybe current packet changed the number of IP headers */
+	rfc3095_ctxt->multiple_ip = decoded->multiple_ip;
+
 	/* update fields related to the outer IP header */
 	ip_set_version(&rfc3095_ctxt->outer_ip_changes->ip, decoded->outer_ip.version);
 	ip_set_protocol(&rfc3095_ctxt->outer_ip_changes->ip, decoded->outer_ip.proto);
@@ -6137,6 +6143,9 @@ static void reset_extr_bits(const struct rohc_decomp_rfc3095_ctxt *const rfc3095
 	/* by default context is not re-used */
 	bits->is_context_reused = false;
 
+	/* by default same number of IP headers as in previous packets */
+	bits->multiple_ip = rfc3095_ctxt->multiple_ip;
+
 	/* set IP version and NBO/RND flags for outer IP header */
 	bits->outer_ip.version = ip_get_version(&rfc3095_ctxt->outer_ip_changes->ip);
 	bits->outer_ip.nbo = rfc3095_ctxt->outer_ip_changes->nbo;
@@ -6144,7 +6153,7 @@ static void reset_extr_bits(const struct rohc_decomp_rfc3095_ctxt *const rfc3095
 	bits->outer_ip.is_id_enc = true;
 
 	/* set IP version and NBO/RND flags for inner IP header (if any) */
-	if(rfc3095_ctxt->multiple_ip)
+	if(bits->multiple_ip)
 	{
 		bits->inner_ip.version = ip_get_version(&rfc3095_ctxt->inner_ip_changes->ip);
 		bits->inner_ip.nbo = rfc3095_ctxt->inner_ip_changes->nbo;
